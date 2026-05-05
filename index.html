@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staffing Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:#1a1a1a;background:#f0f0ec;min-height:100vh}
+
+/* ── HEADER ── */
+.header{background:#1a1a1a;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.header-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.header-sub{font-size:11px;color:#888;margin-top:1px}
+.header-right{display:flex;align-items:center;gap:10px}
+.header-badge{font-size:10px;background:#2a2a2a;border-radius:20px;padding:3px 10px;color:#aaa;border:1px solid #333}
+
+/* ── WEEK NAV ── */
+.week-nav{background:#fff;border-bottom:1px solid #e5e5e0;padding:10px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:49px;z-index:40}
+.wnav-btn{font-size:16px;background:none;border:1px solid #ddd;border-radius:6px;width:30px;height:30px;cursor:pointer;color:#555;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.wnav-btn:hover{background:#f5f5f3;border-color:#bbb}
+.wnav-center{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;max-width:280px;margin:0 auto}
+.wnav-label{font-size:13px;font-weight:600;color:#1a1a1a}
+.wnav-sub{font-size:11px;color:#888}
+.wnav-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500}
+.wnav-badge.current{background:#eaf3de;color:#27500a}
+.wnav-badge.future{background:#e8f0fc;color:#1a5fa0}
+.wnav-badge.past{background:#f0f0ec;color:#888}
+.wnav-count{font-size:11px;color:#aaa;margin-left:auto}
+
+/* ── TABS ── */
+.tab-bar{background:#fff;border-bottom:1px solid #e5e5e0;display:flex;overflow-x:auto;padding:0 24px;gap:0;position:sticky;top:95px;z-index:40}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{font-size:12px;font-weight:500;padding:11px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:#888;cursor:pointer;white-space:nowrap;font-family:inherit;transition:color .15s;margin-bottom:-1px}
+.tab-btn:hover{color:#1a1a1a}
+.tab-btn.active{color:#1a1a1a;border-bottom-color:#1a1a1a;font-weight:600}
+
+/* ── CONTAINER ── */
+.container{max-width:1100px;margin:0 auto;padding:20px}
+
+/* ── PANELS ── */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── METRICS ── */
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.metric{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e5e5e0}
+.metric-label{font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.metric-val{font-size:26px;font-weight:700;line-height:1}
+.metric-sub{font-size:11px;color:#aaa;margin-top:4px}
+.c-red{color:#a32d2d}.c-amber{color:#854f0b}.c-green{color:#2d6e2d}.c-blue{color:#1a5fa0}
+
+/* ── WEEK GRID (overview) ── */
+.week-section{margin-bottom:18px}
+.week-section-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.day-card{background:#fff;border-radius:8px;padding:10px 12px;min-height:80px;border:1px solid #e5e5e0}
+.day-card-label{font-size:10px;font-weight:700;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
+.dsp{font-size:10px;border-radius:4px;padding:2px 6px;margin-bottom:2px;display:block;font-weight:500}
+.dsp.open{background:#fcebeb;color:#791f1f}
+.dsp.partial{background:#faeeda;color:#633806}
+.dsp.filled{background:#eaf3de;color:#27500a}
+.dsp.none{color:#bbb;font-weight:400}
+
+/* ── CARD ── */
+.card{background:#f8f8f5;border-radius:10px;padding:18px 20px;margin-bottom:16px;border:1px solid #e5e5e0}
+.card-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
+
+/* ── FORM ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:11px;color:#666;font-weight:500}
+input,select,textarea{font-size:13px;padding:8px 11px;border-radius:7px;border:1px solid #ddd;background:#fff;color:#1a1a1a;font-family:inherit;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#999}
+textarea{resize:vertical;min-height:60px}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.btn-primary{font-size:12px;font-weight:600;padding:8px 20px;border-radius:7px;border:1px solid #1a1a1a;background:#1a1a1a;color:#fff;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-primary:hover{background:#333}
+.btn-secondary{font-size:12px;padding:8px 18px;border-radius:7px;border:1px solid #ddd;background:#fff;color:#1a1a1a;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-secondary:hover{background:#f5f5f3}
+
+/* ── FILTERS ── */
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.fl{font-size:11px;color:#888}
+.pill{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid #ddd;background:#fff;color:#666;cursor:pointer;font-family:inherit;transition:all .15s}
+.pill.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+
+/* ── SHIFT LIST ── */
+.shift-list{display:flex;flex-direction:column;gap:7px}
+.shift-row{background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:12px 14px;display:grid;grid-template-columns:72px 1fr auto auto;gap:12px;align-items:start}
+.shift-row.open{border-left:3px solid #e24b4a}
+.shift-row.partial{border-left:3px solid #ef9f27}
+.shift-row.filled{border-left:3px solid #639922}
+.sr-date{font-size:11px;font-weight:600;color:#666;padding-top:2px}
+.sr-time{font-size:13px;font-weight:600;color:#1a1a1a}
+.sr-meta{font-size:11px;color:#888;margin-top:2px;line-height:1.4}
+.sr-names{margin-top:5px;display:flex;flex-wrap:wrap;gap:4px}
+.sr-names span{display:inline-block;background:#f0f0ec;border-radius:10px;padding:2px 8px;font-size:10px;color:#444}
+.status-badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:10px;white-space:nowrap;align-self:start}
+.status-badge.open{background:#fcebeb;color:#791f1f}
+.status-badge.partial{background:#faeeda;color:#633806}
+.status-badge.filled{background:#eaf3de;color:#27500a}
+.action-btns{display:flex;gap:5px;align-self:start}
+.btn-icon{font-size:11px;padding:3px 9px;border-radius:6px;border:1px solid #e5e5e0;background:transparent;cursor:pointer;font-family:inherit;color:#666;transition:background .15s}
+.btn-icon:hover{background:#f5f5f3}
+.btn-icon.del{color:#a32d2d;border-color:transparent}
+.btn-icon.del:hover{background:#fcebeb}
+.jira-row{display:flex;align-items:center;gap:7px;margin-top:7px;padding-top:7px;border-top:1px solid #f0f0ec;flex-wrap:wrap}
+.jira-btn{font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-family:inherit;color:#666;transition:all .15s;white-space:nowrap}
+.jira-btn.submitted{background:#eaf3de;color:#27500a;border-color:#97c459;font-weight:600}
+.jira-link-input{font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid #ddd;background:#fff;color:#1a1a1a;font-family:inherit;flex:1;min-width:140px}
+.jira-anchor{font-size:11px;color:#1a5fa0;text-decoration:none;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jira-anchor:hover{text-decoration:underline}
+
+/* ── OT TABLE ── */
+.ot-table{width:100%;border-collapse:collapse}
+.ot-table th{font-size:11px;font-weight:600;color:#888;padding:7px 10px;border-bottom:1px solid #e5e5e0;text-align:left;background:#f8f8f5}
+.ot-table td{font-size:12px;padding:9px 10px;border-bottom:1px solid #f0f0ec;vertical-align:middle}
+.ot-table tr:hover td{background:#fafaf8}
+.ot-summary{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:#f8f8f5;border-radius:8px;align-items:center;border:1px solid #e5e5e0}
+
+/* ── OUTLOOK TABLE ── */
+.otl-wrap{overflow-x:auto;margin-bottom:16px}
+table.otl{border-collapse:collapse;width:100%;min-width:700px;font-size:12px}
+table.otl th{font-size:10px;font-weight:600;color:#888;padding:7px 5px;border-bottom:2px solid #e5e5e0;text-align:center;background:#f8f8f5;white-space:nowrap}
+table.otl th.sc{text-align:left;min-width:148px;width:155px;padding-left:8px}
+table.otl td{padding:0;border-bottom:1px solid #f0f0ec;vertical-align:top}
+table.otl td.sl{font-size:10px;font-weight:600;color:#555;padding:8px;border-right:1px solid #f0f0ec;white-space:nowrap;line-height:1.3}
+table.otl td.sl.ot-s{color:#1a1a1a}
+.otl-cell{padding:6px 7px;min-height:48px;cursor:pointer;transition:background .1s;display:flex;flex-direction:column;gap:2px}
+.otl-cell:hover{background:#f8f8f5}
+.otl-cell.ok{border-top:2px solid #97c459}
+.otl-cell.warn{border-top:2px solid #ef9f27;background:#fffdf7}
+.otl-cell.gap{border-top:2px solid #e24b4a;background:#fff9f9}
+.otl-cell.empty{border-top:2px solid #eee}
+.otl-n{font-size:13px;font-weight:700;line-height:1}
+.otl-n.ok{color:#27500a}.otl-n.warn{color:#854f0b}.otl-n.gap{color:#a32d2d}.otl-n.empty{color:#ccc;font-size:11px;font-weight:400}
+.otl-names{font-size:9px;color:#888;line-height:1.3;word-break:break-word}
+.otl-legend{display:flex;gap:12px;font-size:11px;color:#888;margin-bottom:10px;flex-wrap:wrap}
+.otl-leg{display:flex;align-items:center;gap:4px}
+.otl-lsq{width:10px;height:3px;border-radius:1px;display:inline-block}
+.gap-section{margin-top:16px;padding-top:14px;border-top:1px solid #e5e5e0}
+.gap-section-title{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.gap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.gap-card{border-radius:8px;padding:11px 13px}
+.gap-card.gap{background:#fcebeb;border-left:3px solid #e24b4a}
+.gap-card.warn{background:#faeeda;border-left:3px solid #ef9f27}
+.gap-card-day{font-size:11px;font-weight:700;color:#1a1a1a;margin-bottom:2px}
+.gap-card-shift{font-size:11px;color:#555;margin-bottom:5px}
+.gap-card-status{font-size:11px;font-weight:600}
+.gap-card.gap .gap-card-status{color:#a32d2d}
+.gap-card.warn .gap-card-status{color:#854f0b}
+.no-gaps{background:#eaf3de;border-radius:8px;padding:12px 14px;font-size:13px;color:#27500a;font-weight:500;text-align:center}
+
+/* ── CHANGE PILL (outlook) ── */
+.cp{font-size:9px;font-weight:600;border-radius:3px;padding:1px 4px;margin-top:1px;display:inline-block}
+.cp.callout{background:#fcebeb;color:#791f1f}
+.cp.timeoff{background:#faeeda;color:#633806}
+.cp.early{background:#e8f0fc;color:#1a5fa0}
+.cp.late{background:#f0ecfc;color:#5b21b6}
+.cp.leave{background:#e8e8e4;color:#555}
+
+/* ── DAILY CHANGES ── */
+.change-list{display:flex;flex-direction:column;gap:7px}
+.change-row{background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:11px 14px;display:grid;grid-template-columns:68px 1fr auto;gap:10px;align-items:start}
+.change-row.callout{border-left:3px solid #e24b4a}
+.change-row.timeoff{border-left:3px solid #ef9f27}
+.change-row.early{border-left:3px solid #5b9cf6}
+.change-row.late{border-left:3px solid #a78bfa}
+.cr-date{font-size:11px;font-weight:600;color:#666;padding-top:1px}
+.cr-name{font-size:13px;font-weight:600;color:#1a1a1a}
+.cr-detail{font-size:11px;color:#888;margin-top:2px;line-height:1.4}
+.cbadge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.cbadge.callout{background:#fcebeb;color:#791f1f}
+.cbadge.timeoff{background:#faeeda;color:#633806}
+.cbadge.early{background:#e8f0fc;color:#1a5fa0}
+.cbadge.late{background:#f0ecfc;color:#5b21b6}
+
+/* ── LEAVE TABLE ── */
+.leave-table{width:100%;border-collapse:collapse}
+.leave-table th{font-size:11px;font-weight:600;color:#888;padding:7px 10px;border-bottom:1px solid #e5e5e0;text-align:left;background:#f8f8f5}
+.leave-table td{font-size:12px;padding:9px 10px;border-bottom:1px solid #f0f0ec;vertical-align:middle}
+.lbadge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.lbadge.active{background:#fcebeb;color:#791f1f}
+.lbadge.returning{background:#faeeda;color:#633806}
+.lbadge.returned{background:#eaf3de;color:#27500a}
+
+/* ── SETTINGS ── */
+.settings-section{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid #f0f0ec}
+.settings-section:last-child{border-bottom:none}
+.settings-title{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:3px}
+.settings-desc{font-size:12px;color:#888;margin-bottom:12px;line-height:1.5}
+.date-preview{background:#f8f8f5;border-radius:8px;padding:10px 14px;font-size:12px;color:#555;margin-bottom:12px;line-height:1.7;border:1px solid #e5e5e0}
+.warn-box{background:#faeeda;border-radius:8px;padding:10px 14px;font-size:12px;color:#633806;margin-bottom:12px;line-height:1.6}
+
+/* ── ALERT MODAL ── */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:22px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-title{font-size:14px;font-weight:600;margin-bottom:14px;color:#1a1a1a}
+.alert-modal{background:#fff;border-radius:12px;width:480px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.alert-hdr{background:#a32d2d;padding:18px 22px;display:flex;align-items:center;gap:12px}
+.alert-icon{font-size:22px;color:#fff}
+.alert-title{font-size:14px;font-weight:700;color:#fff}
+.alert-sub-text{font-size:11px;color:rgba(255,255,255,.8);margin-top:2px}
+.alert-body{padding:18px 22px}
+.alert-shift-card{background:#f8f8f5;border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:3px solid #e24b4a}
+.alert-actions{padding:0 22px 18px;display:flex;gap:8px;justify-content:flex-end}
+.btn-alert-ot{font-size:12px;padding:9px 18px;border-radius:7px;border:none;background:#a32d2d;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;transition:background .15s}
+.btn-alert-ot:hover{background:#8a2424}
+
+/* ── MISC ── */
+.empty{font-size:12px;color:#aaa;padding:28px;text-align:center}
+.export-bar{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;padding-top:14px;border-top:1px solid #f0f0ec}
+.toast{position:fixed;bottom:22px;right:22px;background:#1a1a1a;color:#fff;font-size:12px;padding:9px 16px;border-radius:8px;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+
+@media(max-width:640px){
+  .metric-row{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+  .fg.full{grid-column:1}
+  .shift-row{grid-template-columns:1fr auto}
+  .week-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Staffing Dashboard</div>
+    <div class="header-sub" id="header-sub">Leadership reference</div>
+  </div>
+  <div class="header-right">
+    <div class="header-badge">OT &amp; Coverage Tracker</div>
+    <button style="background:none;border:none;color:#888;font-size:17px;cursor:pointer;padding:4px" onclick="showPanel('settings')" title="Settings">&#9881;</button>
+  </div>
+</div>
+
+<div class="week-nav">
+  <button class="wnav-btn" id="wnav-prev" onclick="navWeek(-1)">&#8592;</button>
+  <div class="wnav-center">
+    <div class="wnav-label" id="wnav-label">—</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="wnav-sub" id="wnav-sub">—</div>
+      <span class="wnav-badge" id="wnav-badge">—</span>
+    </div>
+  </div>
+  <button class="wnav-btn" id="wnav-next" onclick="navWeek(1)">&#8594;</button>
+  <div class="wnav-count" id="wnav-count"></div>
+</div>
+
+<div class="tab-bar" id="tab-bar">
+  <button class="tab-btn active" data-panel="overview" onclick="showPanel('overview')">Overview</button>
+  <button class="tab-btn" data-panel="outlook" onclick="showPanel('outlook')">Week outlook</button>
+  <button class="tab-btn" data-panel="changes" onclick="showPanel('changes')">Daily changes</button>
+  <button class="tab-btn" data-panel="leave" onclick="showPanel('leave')">Extended leave</button>
+  <button class="tab-btn" data-panel="shifts" onclick="showPanel('shifts')">Shift tracker</button>
+  <button class="tab-btn" data-panel="ot" onclick="showPanel('ot')">OT log</button>
+  <button class="tab-btn" data-panel="settings" onclick="showPanel('settings')">&#9881; Settings</button>
+</div>
+
+<div class="container">
+
+<!-- ══ OVERVIEW ══ -->
+<div class="panel active" id="panel-overview">
+  <div class="metric-row" id="metrics"></div>
+  <div class="week-section">
+    <div class="week-section-label" id="ws1-label">Days 1–5</div>
+    <div class="week-grid" id="week1"></div>
+  </div>
+  <div class="week-section">
+    <div class="week-section-label" id="ws2-label">Days 6–10</div>
+    <div class="week-grid" id="week2"></div>
+  </div>
+  <div class="export-bar">
+    <button class="btn-secondary" onclick="exportText()">Copy summary</button>
+    <button class="btn-secondary" onclick="exportCSV()">Download CSV</button>
+    <span id="copy-ok" style="font-size:11px;color:#27500a;display:none;align-self:center">Copied!</span>
+  </div>
+</div>
+
+<!-- ══ WEEK OUTLOOK ══ -->
+<div class="panel" id="panel-outlook">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div>
+      <div style="font-size:14px;font-weight:600">Week coverage</div>
+      <div style="font-size:12px;color:#888;margin-top:2px">Click any cell to edit · Counts reflect actual schedule</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-secondary" style="font-size:12px;padding:6px 14px" onclick="clearOutlook()">Clear</button>
+      <button class="btn-secondary" style="font-size:12px;padding:6px 14px" onclick="exportOutlookCSV()">Export CSV</button>
+    </div>
+  </div>
+  <div class="otl-legend">
+    <span class="otl-leg"><span class="otl-lsq" style="background:#97c459"></span>3+ staff</span>
+    <span class="otl-leg"><span class="otl-lsq" style="background:#ef9f27"></span>2 staff (low)</span>
+    <span class="otl-leg"><span class="otl-lsq" style="background:#e24b4a"></span>0–1 staff (gap)</span>
+    <span class="otl-leg"><span class="otl-lsq" style="background:#ddd"></span>Not entered</span>
+    <span style="font-size:10px;color:#ef9f27;margin-left:8px;font-weight:700">OT</span><span style="font-size:10px;color:#888"> = OT-tracked shift</span>
+  </div>
+  <div class="otl-wrap"><table class="otl" id="otl-table"></table></div>
+  <div class="gap-section">
+    <div class="gap-section-title">Gap summary</div>
+    <div id="gap-list"></div>
+  </div>
+</div>
+
+<!-- ══ DAILY CHANGES ══ -->
+<div class="panel" id="panel-changes">
+  <div class="card">
+    <div class="card-title">Log a change</div>
+    <div class="form-grid">
+      <div class="fg"><label>Specialist name</label><input type="text" id="ch-name" placeholder="Full name"></div>
+      <div class="fg"><label>Date</label><select id="ch-date"></select></div>
+      <div class="fg"><label>Change type</label>
+        <select id="ch-type">
+          <option value="callout">Call out</option>
+          <option value="timeoff">Time off request</option>
+          <option value="early">Early departure</option>
+          <option value="late">Late arrival</option>
+        </select>
+      </div>
+      <div class="fg"><label>Scheduled shift</label>
+        <select id="ch-shift">
+          <option>6:45 AM – 3:45 PM</option>
+          <option>7:00 AM – 4:00 PM</option>
+          <option>8:00 AM – 5:00 PM</option>
+          <option>9:00 AM – 6:00 PM</option>
+          <option>11:00 AM – 8:00 PM</option>
+          <option>12:00 PM – 9:00 PM</option>
+          <option>2:00 PM – 11:00 PM</option>
+          <option>3:00 PM – midnight</option>
+        </select>
+      </div>
+      <div class="fg full"><label>Notes</label><input type="text" id="ch-notes" placeholder="Coverage arranged, context, etc."></div>
+    </div>
+    <div class="btn-row"><button class="btn-primary" onclick="addChange()">Log change</button></div>
+  </div>
+  <div class="filter-row">
+    <span class="fl">Filter:</span>
+    <button class="pill active" data-cf="all" onclick="setCF('all')">All</button>
+    <button class="pill" data-cf="callout" onclick="setCF('callout')">Call outs</button>
+    <button class="pill" data-cf="timeoff" onclick="setCF('timeoff')">Time off</button>
+    <button class="pill" data-cf="early" onclick="setCF('early')">Early departures</button>
+    <button class="pill" data-cf="late" onclick="setCF('late')">Late arrivals</button>
+  </div>
+  <div class="change-list" id="change-list"></div>
+</div>
+
+<!-- ══ EXTENDED LEAVE ══ -->
+<div class="panel" id="panel-leave">
+  <div class="card">
+    <div class="card-title">Add to leave roster</div>
+    <div class="form-grid">
+      <div class="fg"><label>Specialist name</label><input type="text" id="lv-name" placeholder="Full name"></div>
+      <div class="fg"><label>Reason</label><input type="text" id="lv-reason" placeholder="FMLA, LOA, Extended sick, Fill-up…"></div>
+      <div class="fg"><label>Start date</label><input type="date" id="lv-start"></div>
+      <div class="fg"><label>Expected return</label><input type="date" id="lv-ret"></div>
+      <div class="fg full"><label>Notes</label><textarea id="lv-notes" placeholder="Coverage arrangements, escalation path, etc."></textarea></div>
+    </div>
+    <div class="btn-row"><button class="btn-primary" onclick="addLeave()">Add to roster</button></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div class="filter-row" style="margin-bottom:0">
+      <span class="fl">Status:</span>
+      <button class="pill active" data-lf="all" onclick="setLF('all')">All</button>
+      <button class="pill" data-lf="active" onclick="setLF('active')">Currently out</button>
+      <button class="pill" data-lf="returning" onclick="setLF('returning')">Returning soon</button>
+      <button class="pill" data-lf="returned" onclick="setLF('returned')">Returned</button>
+    </div>
+    <button class="btn-secondary" style="font-size:12px;padding:6px 14px" onclick="exportLeaveCSV()">Export CSV</button>
+  </div>
+  <table class="leave-table">
+    <thead><tr><th>Specialist</th><th>Reason</th><th>Start</th><th>Exp. Return</th><th>Status</th><th>Notes</th><th></th></tr></thead>
+    <tbody id="leave-tbody"></tbody>
+  </table>
+  <div id="leave-empty" class="empty">No specialists on extended leave.</div>
+</div>
+
+<!-- ══ SHIFT TRACKER ══ -->
+<div class="panel" id="panel-shifts">
+  <div class="card">
+    <div class="card-title">Add shift</div>
+    <div class="form-grid">
+      <div class="fg"><label>Date</label><select id="f-date"></select></div>
+      <div class="fg"><label>Shift</label>
+        <select id="f-shift">
+          <option>Opening (6:45–9 AM)</option>
+          <option>Close 1 (9 PM–midnight)</option>
+          <option>Close 2 (11 PM–midnight)</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="fg"><label>Staff needed</label><input type="number" id="f-needed" min="1" max="10" value="1"></div>
+      <div class="fg"><label>Status</label>
+        <select id="f-status">
+          <option value="open">Open</option>
+          <option value="partial">Partially filled</option>
+          <option value="filled">Filled</option>
+        </select>
+      </div>
+      <div class="fg full"><label>Who is covering</label><input type="text" id="f-covering" placeholder="Comma-separated names"></div>
+      <div class="fg full"><label>Notes</label><textarea id="f-notes" placeholder="Any context for leadership…"></textarea></div>
+    </div>
+    <div class="btn-row"><button class="btn-primary" onclick="addShift()">Add shift</button></div>
+  </div>
+  <div class="filter-row">
+    <span class="fl">Filter:</span>
+    <button class="pill active" data-sf="all" onclick="setSF('all')">All</button>
+    <button class="pill" data-sf="open" onclick="setSF('open')">Open</button>
+    <button class="pill" data-sf="partial" onclick="setSF('partial')">Partial</button>
+    <button class="pill" data-sf="filled" onclick="setSF('filled')">Filled</button>
+  </div>
+  <div class="shift-list" id="shift-list"></div>
+</div>
+
+<!-- ══ OT LOG ══ -->
+<div class="panel" id="panel-ot">
+  <div class="card">
+    <div class="card-title">Log OT assignment</div>
+    <div class="form-grid">
+      <div class="fg"><label>Staff member</label><input type="text" id="ot-name" placeholder="Name"></div>
+      <div class="fg"><label>Date</label><select id="ot-date"></select></div>
+      <div class="fg"><label>Shift</label>
+        <select id="ot-shift">
+          <option>Opening (6:45–9 AM)</option>
+          <option>Close 1 (9 PM–midnight)</option>
+          <option>Close 2 (11 PM–midnight)</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="fg"><label>OT hours</label><input type="number" id="ot-hours" min="0.5" step="0.5" value="4"></div>
+      <div class="fg full"><label>Notes</label><input type="text" id="ot-notes" placeholder="Optional context"></div>
+    </div>
+    <div class="btn-row"><button class="btn-primary" onclick="addOT()">Log OT</button></div>
+  </div>
+  <div id="ot-summary"></div>
+  <table class="ot-table">
+    <thead><tr><th>Staff</th><th>Date</th><th>Shift</th><th>OT hrs</th><th>Notes</th><th></th></tr></thead>
+    <tbody id="ot-tbody"></tbody>
+  </table>
+  <div id="ot-empty" class="empty">No OT logged yet.</div>
+</div>
+
+<!-- ══ SETTINGS ══ -->
+<div class="panel" id="panel-settings">
+  <div class="settings-section">
+    <div class="settings-title">Week date range</div>
+    <div class="settings-desc">Pick any date and the dashboard will snap to that Monday–Sunday week. Navigating with the arrows always moves one full week at a time.</div>
+    <div class="form-grid" style="max-width:280px;margin-bottom:12px">
+      <div class="fg full"><label>Pick any date in the week</label><input type="date" id="s-start" onchange="previewRange()"></div>
+    </div>
+    <div class="date-preview" id="range-preview">Select a start date to preview.</div>
+    <div class="btn-row" style="justify-content:flex-start;gap:8px">
+      <button class="btn-primary" onclick="applyRange()">Apply date range</button>
+      <button class="btn-secondary" onclick="previewRange()">Preview</button>
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-title">Current week</div>
+    <div class="date-preview" id="current-range">—</div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-title">Clear current week</div>
+    <div class="settings-desc">Resets all shifts and OT for this week only. Week data is preserved.</div>
+    <button class="btn-secondary" onclick="clearWeek()" style="border-color:#e24b4a;color:#a32d2d">Clear all entries</button>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- EDIT SHIFT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title">Edit shift</div>
+    <div class="form-grid" id="edit-form"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- OUTLOOK CELL EDIT MODAL -->
+<div class="modal-overlay" id="otl-modal">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-title" id="otl-modal-title">Edit shift</div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="fg"><label>Staff count</label><input type="number" id="otl-count" min="0" max="30" style="font-size:18px;font-weight:700"></div>
+      <div class="fg"><label>Names (comma-separated)</label><textarea id="otl-names" style="min-height:64px" placeholder="e.g. Sutton, Littleton, Ross"></textarea></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('otl-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveOtlCell()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALERT MODAL -->
+<div class="modal-overlay" id="alert-modal">
+  <div class="alert-modal">
+    <div class="alert-hdr">
+      <div class="alert-icon">⚠</div>
+      <div>
+        <div class="alert-title">Emergency OT needed</div>
+        <div class="alert-sub-text" id="alert-sub">Callout has dropped a shift below minimum</div>
+      </div>
+    </div>
+    <div class="alert-body" id="alert-body"></div>
+    <div class="alert-actions">
+      <button class="btn-secondary" onclick="closeModal('alert-modal')">Dismiss</button>
+      <button class="btn-alert-ot" onclick="closeModal('alert-modal');showPanel('shifts')">Log OT shift now →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── NAME UTILITIES ─────────────────────────────────────────────────────
+function getFirstName(n){
+  // handles "Last, First" and "First Last" and "First" only
+  n=n.trim();
+  if(n.includes(',')){
+    // "Last, First" format — return First
+    const after=n.split(',')[1].trim();
+    return after.split(' ')[0];
+  }
+  return n.split(' ')[0];
+}
+function getFirstLastInitial(n){
+  n=n.trim();
+  let first,last;
+  if(n.includes(',')){
+    const parts=n.split(',');
+    last=parts[0].trim();
+    first=(parts[1]||'').trim().split(' ')[0];
+  } else {
+    const parts=n.split(' ');
+    first=parts[0];
+    last=parts[1]||'';
+  }
+  return first+(last?` ${last[0]}.`:'');
+}
+const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const SHIFT_LABELS={callout:'Call out',timeoff:'Time off',early:'Early departure',late:'Late arrival'};
+const LEAVE_LABELS={active:'Currently out',returning:'Returning soon',returned:'Returned'};
+const OTL_MIN=3;
+
+const OUTLOOK_SHIFTS=[
+  {key:'s645',  label:'6:45 AM – 3:45 PM', ot:true},
+  {key:'s700',  label:'7:00 AM – 4:00 PM',  ot:false},
+  {key:'s800',  label:'8:00 AM – 5:00 PM',  ot:false},
+  {key:'s900',  label:'9:00 AM – 6:00 PM',  ot:false},
+  {key:'s1100', label:'11:00 AM – 8:00 PM', ot:false},
+  {key:'s1200', label:'12:00 PM – 9:00 PM', ot:false},
+  {key:'s200',  label:'2:00 PM – 11:00 PM', ot:false},
+  {key:'s300',  label:'3:00 PM – midnight', ot:true}
+];
+
+const SHIFT_MAP={s645:'6:45',s700:'7:00',s800:'8:00',s900:'9:00',s1100:'11:00',s1200:'12:00',s200:'2:00',s300:'3:00'};
+
+// ── PRE-POPULATED SCHEDULE DATA ────────────────────────────────────────
+// Based on Team Schedules 2026 sheet — typical weekly counts and names
+// Days: Sun Mon Tue Wed Thu Fri Sat  (index 0-6)
+// We store as day-of-week patterns, then apply to DATE_ORDER each week
+
+const BASE_SCHEDULE = {
+  // shift key -> array of {days:[0-6 day numbers], name}
+  s645: [
+    {days:[1,2,3,4,5], name:'Sutton'},
+    {days:[0,1,2,3,4,5,6], name:'Littleton'},
+    {days:[0,1,2,5,6], name:'Hernandez (LOA)'},
+    {days:[0,3,4,5,6], name:'Lewis'},
+  ],
+  s700: [
+    {days:[1,2,3,4,5], name:'Karen Serrano'},
+    {days:[0,3,4,5,6], name:'Lydia Johnson'},
+    {days:[1,2,3,4,5], name:'Anis'},
+  ],
+  s800: [
+    {days:[0,1,2,5,6], name:'Ilet'},
+    {days:[0,1,2,5,6], name:'Johnson V.'},
+    {days:[0,1,2,5,6], name:'Mason'},
+  ],
+  s900: [
+    {days:[1,2,3,4,5], name:'Jegede'},
+    {days:[1,2,3,4,5], name:'Terrazas'},
+    {days:[1,2,3,4,5], name:'Dean'},
+    {days:[1,2,3,4,5], name:'Ferreira'},
+    {days:[0,3,4,5,6], name:'Koite'},
+    {days:[0,1,4,5,6], name:'Ross'},
+    {days:[0,3,4,6], name:'Evans'}, // 9am-8pm
+  ],
+  s1100: [
+    {days:[1,2,3,4,5], name:'Taylor'},
+  ],
+  s1200: [
+    {days:[1,2,3,4,5], name:'Whitsett'},
+    {days:[1,2,3,4,5], name:'Cuevas'},
+    {days:[1,2,3,4,5], name:'Perez'},
+    {days:[1,2,3,4,5], name:'Kennelly'},
+    {days:[1,2,3,4,5], name:'Gonzalez'},
+    {days:[0,3,4,5,6], name:'Beamon'},
+    {days:[1,2,3,4,5], name:'Shipley'},
+    {days:[0,1,2,5,6], name:'Rideaux'},
+    {days:[0,1,2,5], name:'Cauthen'},
+  ],
+  s200: [
+    {days:[0,3,4,5,6], name:'Cueva R.'},
+    {days:[0,3,4,5,6], name:'Morris'},
+  ],
+  s300: [
+    {days:[1,2,3,4,5], name:'Crystal Johnson'},
+    {days:[0,3,4,5,6], name:'Kimberly Jones'},
+    {days:[0,1,2,3,4], name:'Garrett'},
+    {days:[0,1,2,6], name:'Saunders'},
+    {days:[0,1,4,5,6], name:'Childs'},
+    {days:[0,1,3,4,5,6], name:'Garcia'},
+  ],
+};
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let weekStore={};
+let currentWeekKey=null;
+let DATE_ORDER=[];
+let shifts=[], otLog=[], dailyChanges=[], outlookData={};
+let leaveRoster=[];  // global
+let nextId=1;
+let shiftFilter='all', changeFilter='all', leaveFilter='all';
+let otlEditKey=null, otlEditDay=null;
+let editShiftId=null;
+
+// ── UTILITIES ──────────────────────────────────────────────────────────
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2200);
+}
+
+function statusLabel(s){return s==='open'?'Open':s==='partial'?'Partially filled':'Filled';}
+
+function closeModal(id){document.getElementById(id).className='modal-overlay';}
+
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.panel===name));
+  const p=document.getElementById('panel-'+name);
+  if(p)p.classList.add('active');
+  if(name==='outlook')renderOutlook();
+  if(name==='settings'){
+    document.getElementById('current-range').innerHTML=getRangeDisplay(DATE_ORDER);
+  }
+}
+
+// ── DATE UTILITIES ─────────────────────────────────────────────────────
+function isoToDate(iso){const p=iso.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
+function addDaysISO(iso,d){const dt=isoToDate(iso);dt.setDate(dt.getDate()+d);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
+function dateLabel(dt){return DAY_NAMES[dt.getDay()]+' '+(dt.getMonth()+1)+'/'+dt.getDate();}
+function genDateRange(startISO,n){
+  const p=startISO.split('-');const base=new Date(+p[0],+p[1]-1,+p[2]);
+  return Array.from({length:n},(_,i)=>{const d=new Date(base);d.setDate(base.getDate()+i);return{label:dateLabel(d),dow:d.getDay(),iso:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};});
+}
+function getRangeDisplay(dates){
+  if(!dates.length)return'—';
+  return`<strong>${dates[0]}</strong> through <strong>${dates[dates.length-1]}</strong> · ${dates.length} days`;
+}
+function getTodayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function getWeekBadge(iso){
+  const today=getTodayISO();
+  const endISO=addDaysISO(iso,DATE_ORDER.length-1);
+  if(iso<=today&&today<=endISO)return{text:'Current week',cls:'current'};
+  if(iso>today)return{text:'Future',cls:'future'};
+  return{text:'Past',cls:'past'};
+}
+
+// ── WEEK STORE ─────────────────────────────────────────────────────────
+function initOutlookData(){OUTLOOK_SHIFTS.forEach(s=>{outlookData[s.key]={};});}
+
+function populateOutlookFromSchedule(dateObjects){
+  // dateObjects = [{label, dow, iso}, ...]
+  initOutlookData();
+  dateObjects.forEach(({label,dow})=>{
+    OUTLOOK_SHIFTS.forEach(sh=>{
+      const people=BASE_SCHEDULE[sh.key]||[];
+      const here=people.filter(p=>p.days.includes(dow)&&!p.name.includes('LOA'));
+      if(here.length>0){
+        outlookData[sh.key][label]={count:here.length,names:here.map(p=>p.name).join(', ')};
+      }
+    });
+  });
+}
+
+function saveCurrentWeek(){
+  if(!currentWeekKey)return;
+  const od={};OUTLOOK_SHIFTS.forEach(s=>{od[s.key]=Object.assign({},outlookData[s.key]);});
+  weekStore[currentWeekKey]={
+    dateOrder:[...DATE_ORDER],
+    shifts:JSON.parse(JSON.stringify(shifts)),
+    otLog:JSON.parse(JSON.stringify(otLog)),
+    dailyChanges:JSON.parse(JSON.stringify(dailyChanges)),
+    outlookData:od,nextId
+  };
+}
+
+function loadWeek(key,isNew){
+  saveCurrentWeek();
+  currentWeekKey=key;
+  const w=weekStore[key];
+  if(w&&!isNew){
+    DATE_ORDER=[...w.dateOrder];
+    shifts=JSON.parse(JSON.stringify(w.shifts));
+    otLog=JSON.parse(JSON.stringify(w.otLog));
+    dailyChanges=JSON.parse(JSON.stringify(w.dailyChanges||[]));
+    OUTLOOK_SHIFTS.forEach(s=>{outlookData[s.key]=Object.assign({},w.outlookData[s.key]||{});});
+    nextId=w.nextId;
+  } else {
+    const dateObjects=genDateRange(key,7);
+    DATE_ORDER=dateObjects.map(d=>d.label);
+    shifts=[];otLog=[];dailyChanges=[];nextId=1;shiftFilter='all';
+    populateOutlookFromSchedule(dateObjects);
+    // Save immediately
+    const od={};OUTLOOK_SHIFTS.forEach(s=>{od[s.key]=Object.assign({},outlookData[s.key]);});
+    weekStore[key]={dateOrder:[...DATE_ORDER],shifts:[],otLog:[],dailyChanges:[],outlookData:od,nextId:1};
+  }
+  rebuildDropdowns();
+  updateWeekNav();
+  renderAll();
+}
+
+function getMondayISO(iso){
+  // Given any ISO date, return the ISO of that week's Monday
+  const d=isoToDate(iso);
+  const dow=d.getDay(); // 0=Sun,1=Mon...6=Sat
+  const diff=dow===0?-6:1-dow; // shift back to Monday
+  d.setDate(d.getDate()+diff);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function navWeek(dir){saveCurrentWeek();loadWeek(addDaysISO(currentWeekKey,dir*7));}
+
+function updateWeekNav(){
+  document.getElementById('wnav-label').textContent=DATE_ORDER[0]||'—';
+  if(DATE_ORDER.length>1)document.getElementById('wnav-label').textContent=DATE_ORDER[0]+' – '+DATE_ORDER[DATE_ORDER.length-1];
+  document.getElementById('wnav-sub').textContent=DATE_ORDER.length+' day schedule';
+  const b=getWeekBadge(currentWeekKey);
+  const badge=document.getElementById('wnav-badge');
+  badge.textContent=b.text;badge.className='wnav-badge '+b.cls;
+  const keys=Object.keys(weekStore).sort();
+  const idx=keys.indexOf(currentWeekKey);
+  document.getElementById('wnav-count').textContent=`Week ${idx+1} of ${keys.length}`;
+  document.getElementById('header-sub').textContent=(DATE_ORDER[0]||'')+(DATE_ORDER.length>1?' – '+DATE_ORDER[DATE_ORDER.length-1]:'')+' · Leadership reference';
+}
+
+function rebuildDropdowns(){
+  const opts=DATE_ORDER.map(d=>`<option>${d}</option>`).join('');
+  ['f-date','ot-date','ch-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+
+function clearWeek(){
+  if(!confirm('Clear all entries for this week?'))return;
+  shifts=[];otLog=[];dailyChanges=[];nextId=1;
+  populateOutlookFromSchedule(genDateRange(currentWeekKey,7));
+  saveCurrentWeek();renderAll();toast('Week cleared — schedule data restored');
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────
+function previewRange(){
+  const start=document.getElementById('s-start').value;
+  if(!start){document.getElementById('range-preview').textContent='Select any date — the dashboard will snap to that Monday.';return;}
+  const monday=getMondayISO(start);
+  const dates=genDateRange(monday,7).map(d=>d.label);
+  document.getElementById('range-preview').innerHTML='Week: '+getRangeDisplay(dates)+'<br><span style="color:#aaa;font-size:10px">'+dates.join(' · ')+'</span>';
+}
+function applyRange(){
+  const start=document.getElementById('s-start').value;
+  if(!start){toast('Please select a start date');return;}
+  const monday=getMondayISO(start);
+  loadWeek(monday);
+  document.getElementById('current-range').innerHTML=getRangeDisplay(DATE_ORDER);
+  showPanel('overview');
+  toast('Navigated to week of '+DATE_ORDER[0]);
+}
+
+// ── RENDER ALL ─────────────────────────────────────────────────────────
+function renderAll(){
+  renderMetrics();renderOverviewGrid();renderShiftList();renderOTLog();
+  renderOutlook();renderChanges();renderLeave();
+}
+
+// ── METRICS ───────────────────────────────────────────────────────────
+function renderMetrics(){
+  const open=shifts.filter(s=>s.status==='open').length;
+  const partial=shifts.filter(s=>s.status==='partial').length;
+  const filled=shifts.filter(s=>s.status==='filled').length;
+  const otHrs=otLog.reduce((a,o)=>a+o.hours,0);
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Open shifts</div><div class="metric-val c-red">${open}</div><div class="metric-sub">Need coverage</div></div>
+    <div class="metric"><div class="metric-label">Partially filled</div><div class="metric-val c-amber">${partial}</div><div class="metric-sub">In progress</div></div>
+    <div class="metric"><div class="metric-label">Filled</div><div class="metric-val c-green">${filled}</div><div class="metric-sub">of ${shifts.length} total</div></div>
+    <div class="metric"><div class="metric-label">OT hours logged</div><div class="metric-val c-blue">${otHrs.toFixed(1)}</div><div class="metric-sub">${otLog.length} assignment${otLog.length!==1?'s':''}</div></div>`;
+}
+
+// ── OVERVIEW GRID ─────────────────────────────────────────────────────
+function renderOverviewGrid(){
+  const half=Math.ceil(DATE_ORDER.length/2);
+  [[DATE_ORDER.slice(0,half),'week1','ws1-label'],[DATE_ORDER.slice(half),'week2','ws2-label']].forEach(([week,id,lid])=>{
+    const el=document.getElementById(id);if(!el)return;
+    document.getElementById(lid).textContent=week.length?week[0]+' – '+week[week.length-1]:'';
+    el.innerHTML=week.map(day=>{
+      const ds=shifts.filter(s=>s.date===day);
+      const pills=!ds.length?'<span class="dsp none">No shifts logged</span>':ds.map(s=>`<span class="dsp ${s.status}">${s.shift.split('(')[0].trim()}: ${statusLabel(s.status)}</span>`).join('');
+      return`<div class="day-card"><div class="day-card-label">${day}</div>${pills}</div>`;
+    }).join('');
+  });
+}
+
+// ── SHIFT TRACKER ─────────────────────────────────────────────────────
+function addShift(){
+  const date=document.getElementById('f-date').value;
+  const shift=document.getElementById('f-shift').value;
+  const needed=parseInt(document.getElementById('f-needed').value)||1;
+  const status=document.getElementById('f-status').value;
+  const covering=document.getElementById('f-covering').value.trim();
+  const notes=document.getElementById('f-notes').value.trim();
+  shifts.push({id:nextId++,date,shift,needed,status,covering,notes,jiraSubmitted:false,jiraLink:''});
+  document.getElementById('f-covering').value='';
+  document.getElementById('f-notes').value='';
+  saveCurrentWeek();renderAll();toast('Shift added');
+}
+function deleteShift(id){shifts=shifts.filter(s=>s.id!==id);saveCurrentWeek();renderAll();toast('Removed');}
+function openEdit(id){
+  editShiftId=id;
+  const s=shifts.find(x=>x.id===id);if(!s)return;
+  const dateOpts=DATE_ORDER.map(d=>`<option${d===s.date?' selected':''}>${d}</option>`).join('');
+  const shiftOpts=['Opening (6:45–9 AM)','Close 1 (9 PM–midnight)','Close 2 (11 PM–midnight)','Other'].map(x=>`<option${x===s.shift?' selected':''}>${x}</option>`).join('');
+  document.getElementById('edit-form').innerHTML=`
+    <div class="fg"><label>Date</label><select id="e-date">${dateOpts}</select></div>
+    <div class="fg"><label>Shift</label><select id="e-shift">${shiftOpts}</select></div>
+    <div class="fg"><label>Staff needed</label><input type="number" id="e-needed" value="${s.needed}" min="1" max="10"></div>
+    <div class="fg"><label>Status</label><select id="e-status"><option value="open"${s.status==='open'?' selected':''}>Open</option><option value="partial"${s.status==='partial'?' selected':''}>Partially filled</option><option value="filled"${s.status==='filled'?' selected':''}>Filled</option></select></div>
+    <div class="fg full"><label>Who is covering</label><input type="text" id="e-covering" value="${s.covering}"></div>
+    <div class="fg full"><label>Notes</label><textarea id="e-notes">${s.notes}</textarea></div>`;
+  document.getElementById('edit-modal').className='modal-overlay show';
+}
+function saveEdit(){
+  const s=shifts.find(x=>x.id===editShiftId);if(!s)return;
+  s.date=document.getElementById('e-date').value;
+  s.shift=document.getElementById('e-shift').value;
+  s.needed=parseInt(document.getElementById('e-needed').value)||1;
+  s.status=document.getElementById('e-status').value;
+  s.covering=document.getElementById('e-covering').value.trim();
+  s.notes=document.getElementById('e-notes').value.trim();
+  closeModal('edit-modal');saveCurrentWeek();renderAll();toast('Updated');
+}
+function toggleJira(id){
+  const s=shifts.find(x=>x.id===id);if(!s)return;
+  s.jiraSubmitted=!s.jiraSubmitted;if(!s.jiraSubmitted)s.jiraLink='';
+  saveCurrentWeek();renderShiftList();toast(s.jiraSubmitted?'Marked submitted':'Marked not submitted');
+}
+function saveJiraLink(id,val){
+  const s=shifts.find(x=>x.id===id);if(!s)return;
+  s.jiraLink=val.trim();saveCurrentWeek();renderShiftList();if(s.jiraLink)toast('Link saved');
+}
+function setSF(f){shiftFilter=f;document.querySelectorAll('[data-sf]').forEach(b=>b.classList.toggle('active',b.dataset.sf===f));renderShiftList();}
+function renderShiftList(){
+  const list=document.getElementById('shift-list');
+  let rows=shiftFilter==='all'?shifts:shifts.filter(s=>s.status===shiftFilter);
+  rows=[...rows].sort((a,b)=>DATE_ORDER.indexOf(a.date)-DATE_ORDER.indexOf(b.date));
+  if(!rows.length){list.innerHTML='<div class="empty">No shifts logged yet.</div>';return;}
+  list.innerHTML=rows.map(s=>{
+    const names=s.covering?s.covering.split(',').map(n=>`<span>${n.trim()}</span>`).join(''):'<span style="color:#bbb;background:none;padding:0">None assigned</span>';
+    const jiraHtml=s.jiraSubmitted?(s.jiraLink?`<a class="jira-anchor" href="${s.jiraLink}" target="_blank">${s.jiraLink}</a><button class="btn-icon" style="font-size:10px;padding:2px 6px" onclick="saveJiraLink(${s.id},'')">Edit</button>`:`<input class="jira-link-input" placeholder="Paste Jira link…" onblur="saveJiraLink(${s.id},this.value)" onkeydown="if(event.key==='Enter')saveJiraLink(${s.id},this.value)">`):'';
+    return`<div class="shift-row ${s.status}">
+      <div class="sr-date">${s.date}</div>
+      <div>
+        <div class="sr-time">${s.shift}</div>
+        <div class="sr-meta">Need ${s.needed}${s.notes?' · '+s.notes:''}</div>
+        <div class="sr-names">${names}</div>
+        <div class="jira-row">
+          <button class="jira-btn${s.jiraSubmitted?' submitted':''}" onclick="toggleJira(${s.id})">${s.jiraSubmitted?'✓ Jira submitted':'Jira not submitted'}</button>
+          ${jiraHtml}
+        </div>
+      </div>
+      <span class="status-badge ${s.status}">${statusLabel(s.status)}</span>
+      <div class="action-btns">
+        <button class="btn-icon" onclick="openEdit(${s.id})">Edit</button>
+        <button class="btn-icon del" onclick="deleteShift(${s.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── OT LOG ─────────────────────────────────────────────────────────────
+function addOT(){
+  const name=document.getElementById('ot-name').value.trim();
+  const date=document.getElementById('ot-date').value;
+  const shift=document.getElementById('ot-shift').value;
+  const hours=parseFloat(document.getElementById('ot-hours').value)||0;
+  const notes=document.getElementById('ot-notes').value.trim();
+  if(!name){toast('Please enter a name');return;}
+  otLog.push({id:nextId++,name,date,shift,hours,notes});
+  document.getElementById('ot-name').value='';
+  document.getElementById('ot-notes').value='';
+  saveCurrentWeek();renderAll();toast('OT logged');
+}
+function deleteOT(id){otLog=otLog.filter(o=>o.id!==id);saveCurrentWeek();renderAll();toast('Removed');}
+function renderOTLog(){
+  const tbody=document.getElementById('ot-tbody');
+  const empty=document.getElementById('ot-empty');
+  const sum=document.getElementById('ot-summary');
+  if(!otLog.length){tbody.innerHTML='';empty.style.display='block';sum.innerHTML='';return;}
+  empty.style.display='none';
+  const byName={};otLog.forEach(o=>{byName[o.name]=(byName[o.name]||0)+o.hours;});
+  const totalHrs=otLog.reduce((a,o)=>a+o.hours,0);
+  const topNames=Object.entries(byName).sort((a,b)=>b[1]-a[1]);
+  sum.innerHTML=`<div class="ot-summary">${topNames.map(([n,h])=>`<span style="font-size:12px;color:#555"><strong style="color:#1a1a1a">${n}</strong> — ${h.toFixed(1)} hrs</span>`).join('')}<span style="font-size:12px;color:#555;margin-left:auto"><strong>${totalHrs.toFixed(1)}</strong> total OT hrs</span></div>`;
+  tbody.innerHTML=[...otLog].sort((a,b)=>DATE_ORDER.indexOf(a.date)-DATE_ORDER.indexOf(b.date)).map(o=>`
+    <tr><td style="font-weight:600">${o.name}</td><td>${o.date}</td><td>${o.shift}</td><td>${o.hours.toFixed(1)}</td><td style="color:#888">${o.notes||'—'}</td><td><button class="btn-icon del" onclick="deleteOT(${o.id})">✕</button></td></tr>`).join('');
+}
+
+// ── OUTLOOK ────────────────────────────────────────────────────────────
+function getCalloutsForCell(shiftKey,day){
+  const pat=SHIFT_MAP[shiftKey]||'';
+  return dailyChanges.filter(c=>c.date===day&&c.type==='callout'&&c.shift.startsWith(pat)).length;
+}
+function getChangesForCell(shiftKey,day){
+  const pat=SHIFT_MAP[shiftKey]||'';
+  return dailyChanges.filter(c=>c.date===day&&c.shift.startsWith(pat));
+}
+function getActiveLeavePeople(){
+  return leaveRoster.filter(l=>getLeaveStatus(l)!=='returned');
+}
+function renderOutlookTable(){
+  const table=document.getElementById('otl-table');if(!table)return;
+  let html='<thead><tr><th class="sc">Shift (ET)</th>';
+  DATE_ORDER.forEach(d=>{html+=`<th>${d}</th>`;});
+  html+='</tr></thead><tbody>';
+  OUTLOOK_SHIFTS.forEach(sh=>{
+    html+=`<tr><td class="sl${sh.ot?' ot-s':''}">${sh.label}${sh.ot?'<span style="color:#ef9f27;font-size:9px;margin-left:4px;font-weight:700"> OT</span>':''}</td>`;
+    DATE_ORDER.forEach(day=>{
+      const d=outlookData[sh.key][day];
+      const callouts=getCalloutsForCell(sh.key,day);
+      const changes=getChangesForCell(sh.key,day);
+      const leavePeople=getActiveLeavePeople();
+      if(!d){
+        html+=`<td><div class="otl-cell empty" onclick="openOtlModal('${sh.key}','${day}')"><span class="otl-n empty">+</span></div></td>`;
+        return;
+      }
+      const eff=Math.max(0,d.count-callouts);
+      const st=eff>=OTL_MIN?'ok':eff===OTL_MIN-1?'warn':'gap';
+      const rawNames=d.names?d.names.split(',').map(n=>n.trim()).filter(Boolean):[];
+      const firstNames=rawNames.map(n=>getFirstName(n));
+      const namesShort=rawNames.map((n,i)=>{
+        const first=getFirstName(n);
+        const isDup=firstNames.filter(f=>f===first).length>1;
+        return isDup?getFirstLastInitial(n):first;
+      }).join(', ');
+      const countDisplay=callouts>0?`${eff}<span style="font-size:9px;color:#a32d2d;font-weight:600;margin-left:2px">(-${callouts})</span>`:eff;
+      const changePills=changes.map(c=>`<span class="cp ${c.type}">${getFirstName(c.name)}: ${SHIFT_LABELS[c.type]}</span>`).join('');
+      const leavePills=leavePeople.map(l=>`<span class="cp leave">🏥 ${getFirstName(l.name)}: ${l.reason||'Leave'}</span>`).join('');
+      html+=`<td><div class="otl-cell ${st}" onclick="openOtlModal('${sh.key}','${day}')">
+        <span class="otl-n ${st}">${countDisplay}</span>
+        ${namesShort?`<span class="otl-names">${namesShort}</span>`:''}
+        ${changePills}${leavePills}
+      </div></td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody>';
+  table.innerHTML=html;
+}
+function renderOutlookGaps(){
+  const el=document.getElementById('gap-list');if(!el)return;
+  const gaps=[];
+  OUTLOOK_SHIFTS.forEach(sh=>{
+    DATE_ORDER.forEach(day=>{
+      const d=outlookData[sh.key][day];if(!d)return;
+      const callouts=getCalloutsForCell(sh.key,day);
+      const eff=Math.max(0,d.count-callouts);
+      if(eff<OTL_MIN)gaps.push({day,sh,eff,callouts,st:eff===OTL_MIN-1?'warn':'gap'});
+    });
+  });
+  if(!gaps.length){el.innerHTML='<div class="no-gaps">✓ No coverage gaps detected</div>';return;}
+  el.innerHTML='<div class="gap-grid">'+gaps.map(({day,sh,eff,callouts,st})=>{
+    const needed=OTL_MIN-eff;
+    const calloutNote=callouts?` · ${callouts} callout${callouts>1?'s':''}`:'' ;
+    return`<div class="gap-card ${st}">
+      <div class="gap-card-day">${day}</div>
+      <div class="gap-card-shift">${sh.label}</div>
+      <div class="gap-card-status">${eff} staff · need ${needed} more${calloutNote}</div>
+    </div>`;
+  }).join('')+'</div>';
+}
+function renderOutlook(){renderOutlookTable();renderOutlookGaps();}
+function openOtlModal(sk,day){
+  otlEditKey=sk;otlEditDay=day;
+  const sh=OUTLOOK_SHIFTS.find(s=>s.key===sk);
+  const d=outlookData[sk][day]||{};
+  document.getElementById('otl-modal-title').textContent=`${day} · ${sh.label}`;
+  document.getElementById('otl-count').value=d.count!==undefined?d.count:'';
+  document.getElementById('otl-names').value=d.names||'';
+  document.getElementById('otl-modal').className='modal-overlay show';
+  setTimeout(()=>document.getElementById('otl-count').focus(),50);
+}
+function saveOtlCell(){
+  if(!otlEditKey||!otlEditDay)return;
+  const val=document.getElementById('otl-count').value.trim();
+  const names=document.getElementById('otl-names').value.trim();
+  if(val===''){delete outlookData[otlEditKey][otlEditDay];}
+  else{outlookData[otlEditKey][otlEditDay]={count:parseInt(val),names};}
+  closeModal('otl-modal');saveCurrentWeek();renderOutlook();toast('Saved');
+}
+function clearOutlook(){
+  if(!confirm('Reset outlook to base schedule for this week?'))return;
+  populateOutlookFromSchedule(genDateRange(currentWeekKey,7));
+  saveCurrentWeek();renderOutlook();toast('Outlook reset to schedule');
+}
+function exportOutlookCSV(){
+  let csv='Shift,'+DATE_ORDER.join(',')+'\n';
+  OUTLOOK_SHIFTS.forEach(sh=>{
+    csv+=`"${sh.label}"`;
+    DATE_ORDER.forEach(day=>{
+      const d=outlookData[sh.key][day];
+      csv+=d?`,"${d.count}${d.names?' ('+d.names+')':''}"`:',"–"';
+    });
+    csv+='\n';
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='outlook.csv';a.click();
+  toast('CSV downloaded');
+}
+
+// ── THRESHOLD ALERT ────────────────────────────────────────────────────
+function checkAlert(name,shiftLabel,day){
+  for(const sh of OUTLOOK_SHIFTS){
+    const pat=SHIFT_MAP[sh.key]||'';
+    if(!shiftLabel.startsWith(pat))continue;
+    const d=outlookData[sh.key][day];if(!d)continue;
+    const callouts=getCalloutsForCell(sh.key,day);
+    const eff=Math.max(0,d.count-callouts);
+    if(eff<OTL_MIN){
+      const needed=OTL_MIN-eff;
+      document.getElementById('alert-sub').textContent=`${name} called out — ${day} · ${sh.label} is now at ${eff}/${OTL_MIN}`;
+      document.getElementById('alert-body').innerHTML=`
+        <div class="alert-shift-card">
+          <div style="font-size:11px;font-weight:600;color:#888">${day}</div>
+          <div style="font-size:13px;font-weight:700;color:#a32d2d;margin:3px 0">${sh.label}</div>
+          <div style="font-size:12px;color:#555;line-height:1.6">
+            <strong>${eff}</strong> staff remaining · <strong style="color:#a32d2d">${needed} more needed</strong><br>
+            ${d.names?`Scheduled: ${d.names}`:''}
+            ${callouts>1?`<br><span style="color:#a32d2d">${callouts} total callouts on this shift</span>`:''}
+          </div>
+        </div>
+        <div style="font-size:12px;color:#888;line-height:1.6">Use <strong>Shift Tracker</strong> to log an emergency OT shift, or go to <strong>OT Log</strong> to record an assignment.</div>`;
+      document.getElementById('alert-modal').className='modal-overlay show';
+      break;
+    }
+  }
+}
+
+// ── DAILY CHANGES ──────────────────────────────────────────────────────
+function addChange(){
+  const name=document.getElementById('ch-name').value.trim();
+  const date=document.getElementById('ch-date').value;
+  const type=document.getElementById('ch-type').value;
+  const shift=document.getElementById('ch-shift').value;
+  const notes=document.getElementById('ch-notes').value.trim();
+  if(!name){toast('Please enter a name');return;}
+  dailyChanges.push({id:nextId++,name,date,type,shift,notes});
+  document.getElementById('ch-name').value='';
+  document.getElementById('ch-notes').value='';
+  saveCurrentWeek();renderChanges();renderOutlook();toast('Change logged');
+  if(type==='callout')checkAlert(name,shift,date);
+}
+function deleteChange(id){
+  dailyChanges=dailyChanges.filter(c=>c.id!==id);
+  saveCurrentWeek();renderChanges();renderOutlook();toast('Removed');
+}
+function setCF(f){changeFilter=f;document.querySelectorAll('[data-cf]').forEach(b=>b.classList.toggle('active',b.dataset.cf===f));renderChanges();}
+function renderChanges(){
+  const el=document.getElementById('change-list');if(!el)return;
+  let rows=changeFilter==='all'?dailyChanges:dailyChanges.filter(c=>c.type===changeFilter);
+  rows=[...rows].sort((a,b)=>DATE_ORDER.indexOf(a.date)-DATE_ORDER.indexOf(b.date));
+  if(!rows.length){el.innerHTML='<div class="empty">No changes logged for this week.</div>';return;}
+  el.innerHTML=rows.map(c=>`
+    <div class="change-row ${c.type}">
+      <div class="cr-date">${c.date}</div>
+      <div>
+        <div class="cr-name">${c.name}</div>
+        <div class="cr-detail">${c.shift}${c.notes?' · '+c.notes:''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span class="cbadge ${c.type}">${SHIFT_LABELS[c.type]}</span>
+        <button class="btn-icon del" onclick="deleteChange(${c.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── EXTENDED LEAVE ─────────────────────────────────────────────────────
+function getLeaveStatus(l){
+  const today=new Date();today.setHours(0,0,0,0);
+  const ret=l.ret?new Date(l.ret+'T00:00:00'):null;
+  if(ret&&ret<today)return'returned';
+  if(ret&&(ret-today)/(864e5)<=7)return'returning';
+  return'active';
+}
+function fmtDate(iso){if(!iso)return'—';const p=iso.split('-');return MONTH_NAMES[+p[1]-1]+' '+parseInt(p[2])+', '+p[0];}
+function addLeave(){
+  const name=document.getElementById('lv-name').value.trim();
+  const reason=document.getElementById('lv-reason').value.trim();
+  const start=document.getElementById('lv-start').value;
+  const ret=document.getElementById('lv-ret').value;
+  const notes=document.getElementById('lv-notes').value.trim();
+  if(!name){toast('Please enter a name');return;}
+  leaveRoster.push({id:nextId++,name,reason,start,ret,notes});
+  ['lv-name','lv-reason','lv-start','lv-ret','lv-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderLeave();renderOutlook();toast('Added to leave roster');
+}
+function deleteLeave(id){leaveRoster=leaveRoster.filter(l=>l.id!==id);renderLeave();renderOutlook();toast('Removed');}
+function setLF(f){leaveFilter=f;document.querySelectorAll('[data-lf]').forEach(b=>b.classList.toggle('active',b.dataset.lf===f));renderLeave();}
+function renderLeave(){
+  const tbody=document.getElementById('leave-tbody');
+  const empty=document.getElementById('leave-empty');
+  if(!tbody)return;
+  let rows=leaveFilter==='all'?leaveRoster:leaveRoster.filter(l=>getLeaveStatus(l)===leaveFilter);
+  rows=[...rows].sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+  if(!rows.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=rows.map(l=>{
+    const st=getLeaveStatus(l);
+    return`<tr>
+      <td style="font-weight:600">${l.name}</td>
+      <td>${l.reason||'—'}</td>
+      <td>${fmtDate(l.start)}</td>
+      <td>${fmtDate(l.ret)}</td>
+      <td><span class="lbadge ${st}">${LEAVE_LABELS[st]}</span></td>
+      <td style="color:#888;font-style:italic;font-size:11px">${l.notes||'—'}</td>
+      <td><button class="btn-icon del" onclick="deleteLeave(${l.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+function exportLeaveCSV(){
+  let csv='Name,Reason,Start,Expected Return,Status,Notes\n';
+  leaveRoster.forEach(l=>csv+=`"${l.name}","${l.reason}","${fmtDate(l.start)}","${fmtDate(l.ret)}","${LEAVE_LABELS[getLeaveStatus(l)]}","${l.notes}"\n`);
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='extended_leave.csv';a.click();
+  toast('CSV downloaded');
+}
+
+// ── EXPORTS ────────────────────────────────────────────────────────────
+function exportText(){
+  let txt='STAFFING SUMMARY\n'+'='.repeat(40)+'\n'+DATE_ORDER[0]+(DATE_ORDER.length>1?' – '+DATE_ORDER[DATE_ORDER.length-1]:'')+'\n\n';
+  const open=shifts.filter(s=>s.status==='open');
+  const partial=shifts.filter(s=>s.status==='partial');
+  const filled=shifts.filter(s=>s.status==='filled');
+  txt+=`Open: ${open.length} | Partial: ${partial.length} | Filled: ${filled.length} | OT hrs: ${otLog.reduce((a,o)=>a+o.hours,0).toFixed(1)}\n\n`;
+  if(open.length){txt+='OPEN SHIFTS\n'+'-'.repeat(30)+'\n';open.forEach(s=>{txt+=`  ${s.date}  ${s.shift}  (need ${s.needed})${s.notes?'  '+s.notes:''}\n`;});txt+='\n';}
+  if(partial.length){txt+='PARTIALLY FILLED\n'+'-'.repeat(30)+'\n';partial.forEach(s=>{txt+=`  ${s.date}  ${s.shift}  Covering: ${s.covering||'TBD'}\n`;});txt+='\n';}
+  if(dailyChanges.length){txt+='DAILY CHANGES\n'+'-'.repeat(30)+'\n';dailyChanges.forEach(c=>{txt+=`  ${c.date}  ${c.name}  ${SHIFT_LABELS[c.type]}  ${c.shift}\n`;});txt+='\n';}
+  if(otLog.length){txt+='OT LOG\n'+'-'.repeat(30)+'\n';otLog.forEach(o=>{txt+=`  ${o.name}  ${o.date}  ${o.shift}  ${o.hours.toFixed(1)} hrs\n`;});}
+  navigator.clipboard.writeText(txt).then(()=>{
+    const c=document.getElementById('copy-ok');c.style.display='inline';setTimeout(()=>c.style.display='none',2000);
+  }).catch(()=>{const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);toast('Copied!');});
+}
+function exportCSV(){
+  let csv='Type,Date,Shift,Staff Needed,Status,Covering,Notes,Jira\n';
+  [...shifts].sort((a,b)=>DATE_ORDER.indexOf(a.date)-DATE_ORDER.indexOf(b.date)).forEach(s=>{
+    csv+=`"Shift","${s.date}","${s.shift}","${s.needed}","${statusLabel(s.status)}","${s.covering}","${s.notes}","${s.jiraSubmitted?'Submitted':'No'}"\n`;
+  });
+  if(otLog.length){
+    csv+='\nOT Log\nStaff,Date,Shift,Hours,Notes\n';
+    otLog.forEach(o=>csv+=`"${o.name}","${o.date}","${o.shift}","${o.hours}","${o.notes}"\n`);
+  }
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='staffing.csv';a.click();
+  toast('CSV downloaded');
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)this.className='modal-overlay';}));
+
+// Start on the week of May 5, 2026 (Mon start)
+initOutlookData();
+// Start on Monday May 4, 2026
+currentWeekKey='2026-05-04';
+const initialDates=genDateRange('2026-05-04',7);
+DATE_ORDER=initialDates.map(d=>d.label);
+populateOutlookFromSchedule(initialDates);
+// Also pre-load Hernandez as on LOA
+leaveRoster.push({id:nextId++,name:'Abigail Hernandez',reason:'LOA',start:'2026-02-20',ret:'',notes:'Abigail is on leave of absence since 2/20'});
+const od={};OUTLOOK_SHIFTS.forEach(s=>{od[s.key]=Object.assign({},outlookData[s.key]);});
+weekStore['2026-05-04']={dateOrder:[...DATE_ORDER],shifts:[],otLog:[],dailyChanges:[],outlookData:od,nextId};
+rebuildDropdowns();
+updateWeekNav();
+renderAll();
+</script>
+</body>
+</html>
